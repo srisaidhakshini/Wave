@@ -23,7 +23,7 @@ export default function Dashboard() {
       pending: pending.length, overdue, dueToday,
       doneWeek: tasks.filter((t) => t.completedAt && new Date(t.completedAt) >= weekStart).length,
       bars: lastNDays(7).map((x) => ({ label: x.toLocaleDateString([], { weekday: "short" }), value: doneBy.get(dayKey(x)) ?? 0 })),
-      upcoming: pending.filter((t) => t.dueAt).sort((a, b) => +new Date(a.dueAt!) - +new Date(b.dueAt!)).slice(0, 6),
+      upcoming: [...pending].sort((a, b) => (a.dueAt ? +new Date(a.dueAt) : Infinity) - (b.dueAt ? +new Date(b.dueAt) : Infinity)).slice(0, 6), // undated tasks last, so a quick-add is never invisible
     };
   }, [tasks]);
 

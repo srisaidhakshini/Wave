@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, Trash2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { Settings } from "@/lib/types";
 import { cx, toCSV } from "@/lib/utils";
@@ -63,7 +63,13 @@ export default function SettingsPage() {
 
       <Section title="Account & data" hint={user ? (mode === "supabase" ? `Signed in as ${user.email || user.name}. Your data is stored in your Wave database.` : `Signed in as ${user.name}. Data is stored in this browser only.`) : undefined}>
         <div className="flex flex-wrap gap-3">
-          <button className="btn-ghost" onClick={() => { const b = new Blob([toCSV(tasks, categories)], { type: "text/csv" }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "wave-tasks.csv"; a.click(); URL.revokeObjectURL(a.href); toast("Exported tasks.csv", "ok"); }}><Download size={16} /> Export CSV</button>
+          <button className="btn-ghost" onClick={() => {
+            try {
+              const b = new Blob([toCSV(tasks, categories)], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(b);
+              const a = document.createElement("a"); a.href = url; a.download = "wave-tasks.csv"; document.body.appendChild(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 1000); toast("Exported wave-tasks.csv", "ok");
+            } catch { toast("Couldn't export your tasks. Please try again.", "error"); }
+          }}><Download size={16} /> Export CSV</button>
           {mode === "demo" && <button className="btn-ghost" onClick={resetDemo}>Restore demo data</button>}
           <button className="btn-ghost !border-coral/50 !text-coral" onClick={() => window.confirm("Delete all tasks, categories and focus history? This can't be undone.") && clearAll()}>Delete my data</button>
           <button className="btn-primary" onClick={() => { signOut(); router.push("/"); }}>Sign out</button>

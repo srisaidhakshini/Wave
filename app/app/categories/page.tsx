@@ -23,7 +23,7 @@ export default function Categories() {
           return (
             <li key={c.id} className="row-hover flex items-center gap-3 border-t border-line px-2 py-3 last:border-b">
               <input type="color" value={c.color} onChange={(e) => updateCategory(c.id, { color: e.target.value })} aria-label={`Colour for ${c.name}`} className="h-8 w-8 cursor-pointer rounded border border-line bg-transparent p-0.5" />
-              <input className="min-w-0 flex-1 bg-transparent text-sm font-medium focus:outline-none" defaultValue={c.name} maxLength={40} aria-label="Category name"
+              <input key={c.name} className="min-w-0 flex-1 bg-transparent text-sm font-medium focus:outline-none" defaultValue={c.name} maxLength={40} aria-label="Category name"
                 onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== c.name) updateCategory(c.id, { name: v }); else e.target.value = c.name; }} />
               <Link href={`/app/tasks?category=${c.id}`} className="text-xs text-muted hover:text-accent">{open} open</Link>
               <button className="btn-icon hover:!text-coral" onClick={() => deleteCategory(c.id)} aria-label={`Delete ${c.name}`}><Trash2 size={16} /></button>

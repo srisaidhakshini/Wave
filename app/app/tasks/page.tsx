@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ListTodo, Plus, Search } from "lucide-react";
 import { TaskCard } from "@/components/TaskCard";
@@ -21,21 +21,23 @@ function TasksInner() {
   const when = sp.get("when") ?? "";
   const sort = (sp.get("sort") as SortKey) || (status === "completed" ? "completed" : "due");
   const q = sp.get("q") ?? "";
-  const set = (patch: Record<string, string>) => {
-    const n = new URLSearchParams(sp.toString());
+  const set = useCallback((patch: Record<string, string>) => {
+    const n = new URLSearchParams(window.location.search); // live URL so a debounced update never clobbers newer params
     Object.entries(patch).forEach(([k, v]) => (v ? n.set(k, v) : n.delete(k)));
     router.replace(`${path}?${n.toString()}`, { scroll: false });
-  };
+  }, [router, path]);
 
   const [search, setSearch] = useState(q);
-  useEffect(() => { const id = setTimeout(() => search !== q && set({ q: search }), 300); return () => clearTimeout(id); }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pushed = useRef(q); // last q we wrote to the URL ourselves
+  useEffect(() => { if (q !== pushed.current) { pushed.current = q; setSearch(q); } }, [q]); // back/forward or pasted URL
+  useEffect(() => { const id = setTimeout(() => search !== q && (pushed.current = search, set({ q: search })), 300); return () => clearTimeout(id); }, [search, q, set]);
 
   const openId = sp.get("open");
   useEffect(() => {
     if (!openId || !ready) return;
     const t = tasks.find((x) => x.id === openId); if (t) openForm(t);
     set({ open: "" });
-  }, [openId, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [openId, ready, tasks, openForm, set]);
 
   const list = useMemo(() => {
     const today = startOfDay(new Date()); const tom = addDays(today, 1); const wk = endOfWeek(new Date());
