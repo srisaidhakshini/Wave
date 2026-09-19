@@ -1,5 +1,6 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useFocusTrap } from "./useFocusTrap";
 import { Pause, Play, RotateCcw, SkipForward, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cx, fmtClock, fmtMinutes, taskFocusStats } from "@/lib/utils";
@@ -8,6 +9,8 @@ const LABEL = { focus: "Focus", short_break: "Short break", long_break: "Long br
 
 export function FocusDialog() {
   const { focusTaskId, closeFocus, tasks, sessions, timer, timerRemaining, startFocus, pauseTimer, resumeTimer, resetTimer, skipBreak, settings } = useStore();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, !!focusTaskId);
   useEffect(() => {
     if (!focusTaskId) return;
     const k = (e: KeyboardEvent) => e.key === "Escape" && closeFocus();
@@ -27,7 +30,7 @@ export function FocusDialog() {
 
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && closeFocus()}>
-      <div role="dialog" aria-modal="true" aria-label="Focus timer" className="card w-full max-w-md animate-rise p-7 text-center">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Focus timer" className="card w-full max-w-md animate-rise p-7 text-center">
         <div className="flex items-start justify-between text-left">
           <div><p className="label !mb-0">{mine ? LABEL[mine.type] : "Focus"}</p><h2 className="mt-1 text-xl font-semibold leading-snug">{task.title}</h2></div>
           <button className="btn-icon" onClick={closeFocus} aria-label="Close timer"><X size={18} /></button>

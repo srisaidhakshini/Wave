@@ -6,7 +6,16 @@ import { SwRegister } from "@/components/SwRegister";
 
 const sans = Old_Standard_TT({ subsets: ["latin"], weight: ["400", "700"], style: ["normal", "italic"], variable: "--font-sans" });
 
-export const metadata: Metadata = { title: "Wave — ride your deadlines", description: "Plan tasks, focus with Pomodoro, and never miss a deadline.", manifest: "/manifest.webmanifest", icons: { icon: "/icon.svg" } };
+const DESCRIPTION = "Plan tasks, focus with Pomodoro, and never miss a deadline.";
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: { default: "Wave — ride your deadlines", template: "%s · Wave" },
+  description: DESCRIPTION,
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg" },
+  openGraph: { title: "Wave — ride your deadlines", description: DESCRIPTION, siteName: "Wave", type: "website" },
+  twitter: { card: "summary", title: "Wave — ride your deadlines", description: DESCRIPTION },
+};
 export const viewport: Viewport = { themeColor: "#E8E4DC" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

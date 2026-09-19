@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFocusTrap } from "./useFocusTrap";
 import { BellRing, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { Priority } from "@/lib/types";
@@ -8,6 +9,8 @@ import { PRIORITY_LABEL, cx, fromLocalInput, toLocalInput } from "@/lib/utils";
 export function TaskForm() {
   const { form, closeForm, categories, addTask, updateTask, notifyPermission, requestNotify } = useStore();
   const edit = form.task;
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useFocusTrap(dialogRef, form.open);
   const [title, setTitle] = useState(""); const [desc, setDesc] = useState("");
   const [cat, setCat] = useState(""); const [prio, setPrio] = useState<Priority>("medium");
   const [rec, setRec] = useState<"" | "daily" | "weekly">(""); const [due, setDue] = useState(""); const [est, setEst] = useState(""); const [err, setErr] = useState("");
@@ -38,7 +41,7 @@ export function TaskForm() {
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && closeForm()}>
-      <form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="tf-h"
+      <form ref={dialogRef} onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="tf-h"
         className="card max-h-[100dvh] w-full max-w-lg animate-rise space-y-4 overflow-y-auto rounded-b-none p-6 sm:rounded-2xl">
         <div className="flex items-center justify-between">
           <h2 id="tf-h" className="text-2xl font-semibold">{edit ? "Edit task" : "New task"}</h2>

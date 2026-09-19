@@ -6,7 +6,22 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 /** null → the app runs in local demo mode. Only the anon key is ever used in the browser (RLS protects the data). */
 export const supabase = url && key ? createClient(url, key) : null;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+interface CategoryRow { id: string; name: string; color: string }
+interface SubtaskRow { id: string; title: string; is_completed: boolean; position: number }
+interface TaskRow {
+  id: string; title: string; description: string | null; category_id: string | null; priority: Task["priority"];
+  due_at: string | null; is_completed: boolean; completed_at: string | null; estimated_pomodoros: number | null;
+  in_progress: boolean | null; recurrence_rule: string | null; created_at: string; subtasks: SubtaskRow[] | null;
+}
+interface SessionRow {
+  id: string; task_id: string | null; type: Session["type"]; started_at: string; ended_at: string | null;
+  planned_seconds: number; actual_seconds: number | null; completed: boolean;
+}
+interface SettingsRow {
+  focus_minutes: number; short_break_minutes: number; long_break_minutes: number; long_break_every: number;
+  reminders_enabled: boolean; reminder_lead_minutes: number[] | null; theme: string; sound: boolean | null;
+}
+
 export async function loadAll(userId: string) {
   const db = supabase!;
   const [c, t, s, st] = await Promise.all([
@@ -18,19 +33,19 @@ export async function loadAll(userId: string) {
   const err = c.error ?? t.error ?? s.error ?? st.error;
   if (err) throw err;
 
-  const categories: Category[] = (c.data ?? []).map((r: any) => ({ id: r.id, name: r.name, color: r.color }));
-  const tasks: Task[] = (t.data ?? []).map((r: any) => ({
+  const categories: Category[] = ((c.data ?? []) as CategoryRow[]).map((r) => ({ id: r.id, name: r.name, color: r.color }));
+  const tasks: Task[] = ((t.data ?? []) as TaskRow[]).map((r) => ({
     id: r.id, title: r.title, description: r.description ?? "", categoryId: r.category_id, priority: r.priority,
     dueAt: r.due_at, isCompleted: r.is_completed, completedAt: r.completed_at, estimatedPomodoros: r.estimated_pomodoros,
     inProgress: !!r.in_progress, recurrence: r.recurrence_rule === "FREQ=DAILY" ? "daily" : r.recurrence_rule === "FREQ=WEEKLY" ? "weekly" : null,
     createdAt: r.created_at,
-    subtasks: [...(r.subtasks ?? [])].sort((a: any, b: any) => a.position - b.position).map((x: any) => ({ id: x.id, title: x.title, done: x.is_completed })),
+    subtasks: [...(r.subtasks ?? [])].sort((a, b) => a.position - b.position).map((x) => ({ id: x.id, title: x.title, done: x.is_completed })),
   }));
-  const sessions: Session[] = (s.data ?? []).map((r: any) => ({
+  const sessions: Session[] = ((s.data ?? []) as SessionRow[]).map((r) => ({
     id: r.id, taskId: r.task_id, type: r.type, startedAt: r.started_at, endedAt: r.ended_at ?? r.started_at,
     plannedSeconds: r.planned_seconds, actualSeconds: r.actual_seconds ?? 0, completed: r.completed,
   }));
-  const r: any = st.data;
+  const r = st.data as SettingsRow | null;
   const settings: Settings = r ? {
     focusMinutes: r.focus_minutes, shortBreakMinutes: r.short_break_minutes, longBreakMinutes: r.long_break_minutes,
     longBreakEvery: r.long_break_every, remindersEnabled: r.reminders_enabled, reminderLeadMinutes: r.reminder_lead_minutes ?? [60],

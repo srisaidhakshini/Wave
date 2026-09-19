@@ -54,7 +54,7 @@ export function TaskCard({ task }: { task: Task }) {
             <div key={s.id} className="group flex items-center gap-2.5 text-sm">
               <input type="checkbox" checked={s.done} onChange={() => toggleSubtask(task.id, s.id)} className="h-4 w-4 accent-[rgb(var(--accent))]" aria-label={s.title} />
               <span className={cx("flex-1", s.done && "text-muted line-through")}>{s.title}</span>
-              <button onClick={() => deleteSubtask(task.id, s.id)} className="text-muted opacity-0 hover:text-danger focus:opacity-100 group-hover:opacity-100" aria-label={`Remove ${s.title}`}><X size={14} /></button>
+              <button onClick={() => deleteSubtask(task.id, s.id)} className="text-muted hover:text-danger focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100" aria-label={`Remove ${s.title}`}><X size={14} /></button>
             </div>
           ))}
           <form className="flex items-center gap-2 pt-1" onSubmit={(e) => { e.preventDefault(); if (sub.trim()) { addSubtask(task.id, sub); setSub(""); } }}>

@@ -9,7 +9,7 @@ export default function Login() {
   const { ready, user, signIn, signInGoogle, signInEmail, mode, loadError } = useStore();
   const router = useRouter();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(""); const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState(""); const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false); const [gBusy, setGBusy] = useState(false);
   useEffect(() => { if (ready && user) router.replace("/app"); }, [ready, user, router]);
 
   return (
@@ -25,7 +25,7 @@ export default function Login() {
         {loadError && <p className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-xs text-coral" role="alert">{loadError}</p>}
         {mode === "supabase" ? (
           <div className="mt-7 space-y-4">
-            <button type="button" className="btn-ghost w-full !py-3" onClick={signInGoogle}><GoogleIcon /> Continue with Google</button>
+            <button type="button" className="btn-ghost w-full !py-3" disabled={gBusy} onClick={async () => { setGBusy(true); await signInGoogle(); setGBusy(false); }}><GoogleIcon /> {gBusy ? "Redirecting…" : "Continue with Google"}</button>
             <div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
             {sent ? (
               <p className="rounded-xl bg-accent/10 p-4 text-sm">Check <strong>{email}</strong> for your sign-in link. You can close this tab.</p>
