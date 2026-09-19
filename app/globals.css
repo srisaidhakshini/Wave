@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root, .light {
+  --bg: 232 228 220; --side: 222 218 209; --surface: 240 237 230; --surface2: 226 222 213;
+  --line: 10 10 10; --line-a: 0.16;
+  --fg: 10 10 10; --muted: 62 59 53; --faint: 100 96 89;
+  --accent: 10 10 10; --accent2: 40 40 38; --accent-fg: 232 228 220; --coral: 10 10 10; --iris: 62 59 53;
+  --danger: 10 10 10; --ok: 10 10 10;
+  color-scheme: light;
+}
+.dark {
+  --bg: 10 10 10; --side: 14 14 14; --surface: 18 18 18; --surface2: 27 27 26;
+  --line: 232 228 220; --line-a: 0.12;
+  --fg: 232 228 220; --muted: 168 163 152; --faint: 111 107 99;
+  --accent: 232 228 220; --accent2: 245 242 235; --accent-fg: 10 10 10; --coral: 232 228 220; --iris: 181 176 165;
+  --danger: 232 228 220; --ok: 232 228 220;
+  color-scheme: dark;
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-bg text-fg font-sans antialiased; }
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 6px; }
+
+@layer components {
+  .card { @apply rounded-xl border border-line bg-surface; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 active:scale-[.98]; }
+  .btn-primary { @apply btn bg-accent text-accent-fg hover:brightness-110; }
+  .btn-ghost { @apply btn border border-line bg-transparent text-fg hover:bg-surface2; }
+  .btn-icon { @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface2 hover:text-fg; }
+  .input { @apply w-full rounded-lg border border-line bg-surface2/60 px-3.5 py-2.5 text-sm text-fg placeholder:text-muted/70 focus:border-accent focus:outline-none; }
+  .label { @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-medium text-muted transition hover:text-fg; }
+  .chip[aria-pressed="true"] { @apply border-accent bg-accent/15 text-accent; }
+}
+
+.wave-bg { background: linear-gradient(180deg, #ddd8ce 0%, #e8e4dc 45%, #eeebe4 100%); }
+.skeleton { @apply animate-pulse rounded-xl bg-surface2; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+.pixel { image-rendering: pixelated; shape-rendering: crispEdges; }
+.pixel-dots { background-image: radial-gradient(rgb(var(--accent) / .16) 1px, transparent 1px); background-size: 12px 12px; }
+.row-hover { @apply transition-colors hover:bg-surface2/50; }
