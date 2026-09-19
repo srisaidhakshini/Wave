@@ -413,4 +413,5 @@ Verified by running the production build and the app:
 
 ## License
 
-See [`LICENSE`](LICENSE).
+This project is licensed under the MIT License.
+
