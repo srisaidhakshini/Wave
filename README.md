@@ -5,8 +5,6 @@
 Wave is a student task manager that connects *planning* work to *doing* it. Tasks carry priorities, categories and deadlines; each task has its own Pomodoro timer; reminders nudge you before things are due; and a small dashboard shows your momentum. It is a black-and-dusty-white, pixel-accented take on a Discord-style app shell, set in Old Standard TT.
 
 
-> **Status:** feature-complete for the PRD's P0/P1 scope, plus Kanban, recurring tasks, realtime sync and PWA install. Read [Known limitations](#known-limitations) and the [audit notes](#production-audit) before deploying.
-
 ---
 
 ## Contents
