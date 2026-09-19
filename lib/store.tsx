@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_SETTINGS, type Category, type Session, type SessionType, type Settings, type Task, type TaskInput, type TimerState, type User } from "./types";
 import type { User as SbUser } from "@supabase/supabase-js";
 import { buildRows, loadAll, pushDiff, settingsRow, snapshotOf, supabase, type Snapshot } from "./db";
@@ -72,7 +72,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const snap = useRef<Snapshot | null>(null);
   const userIdRef = useRef<string | null>(null);
   const chain = useRef<Promise<void>>(Promise.resolve());
-  const failed = useRef(false);
   const tasksRef = useRef(tasks); tasksRef.current = tasks;
   const categoriesRef = useRef(categories); categoriesRef.current = categories;
   const sessionsRef = useRef(sessions); sessionsRef.current = sessions;
@@ -105,14 +104,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!alive) return;
         setUser({ name: (u.user_metadata?.full_name as string) || u.email?.split("@")[0] || "Student", email: u.email ?? "" });
         setTasks(d.tasks); setCategories(d.categories); setSessions(d.sessions); setSettings(d.settings);
+        setTimer((t) => (t && !d.tasks.some((x) => x.id === t.taskId) ? null : t)); // timer left over from another account
         const rows = buildRows(u.id, d.categories, d.tasks, d.sessions);
         snap.current = snapshotOf(rows, JSON.stringify(settingsRow(u.id, d.settings)));
       } catch (e) {
         userIdRef.current = null;
-        const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Could not load your data";
+        const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "";
         setLoadError(/schema cache|does not exist|relation/i.test(msg)
           ? "You're signed in, but the database tables don't exist yet. In Supabase → SQL Editor, run supabase/setup.sql, then reload this page."
-          : msg);
+          : "We couldn't load your data. Check your connection and try again.");
       }
       setReady(true);
     };
@@ -171,10 +171,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const rows = buildRows(uid_, categories, tasks, sessions);
     chain.current = chain.current.then(async () => {
       if (!snap.current || userIdRef.current !== uid_) return;
-      try { await pushDiff(uid_, rows, settings, snap.current); failed.current = false; }
-      catch (e) {
-        if (!failed.current) toast(`Couldn't save to the database: ${(e as { message?: string })?.message ?? "unknown error"}`, "error");
-        failed.current = true;
+      try { await pushDiff(uid_, rows, settings, snap.current); }
+      catch {
+        // Roll back: discard the optimistic change by re-reading the source of truth.
+        toast("Couldn't save your changes. Please try again.", "error");
+        try {
+          const d = await loadAll(uid_);
+          if (userIdRef.current !== uid_) return;
+          snap.current = snapshotOf(buildRows(uid_, d.categories, d.tasks, d.sessions), JSON.stringify(settingsRow(uid_, d.settings)));
+          setTasks(d.tasks); setCategories(d.categories); setSessions(d.sessions); setSettings(d.settings);
+        } catch { toast("You appear to be offline. Reload once you're back online.", "error"); }
       }
     });
   }, [ready, tasks, categories, sessions, settings, toast]);
@@ -239,7 +245,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (categories.some((c) => c.name.toLowerCase() === n.toLowerCase())) return toast("That category already exists", "error");
     setCategories((a) => [...a, { id: uid(), name: n, color }]);
   };
-  const updateCategory = (id: string, p: Partial<Category>) => setCategories((a) => a.map((c) => (c.id === id ? { ...c, ...p } : c)));
+  const updateCategory = (id: string, p: Partial<Category>) => {
+    if (p.name !== undefined) {
+      const n = p.name.trim().slice(0, 40);
+      if (!n || categories.some((c) => c.id !== id && c.name.toLowerCase() === n.toLowerCase())) return toast("That name is empty or already used by another category", "error");
+      p = { ...p, name: n };
+    }
+    setCategories((a) => a.map((c) => (c.id === id ? { ...c, ...p } : c)));
+  };
   const deleteCategory = (id: string) => { setCategories((a) => a.filter((c) => c.id !== id)); setTasks((a) => a.map((t) => (t.categoryId === id ? { ...t, categoryId: null } : t))); }; // FR-C2
 
   const updateSettings = (p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p }));
@@ -327,11 +340,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     signIn: (name) => setUser({ name: name.trim() || "Student", email: "demo@wave.local" }),
     signInGoogle: async () => {
       const { error } = await supabase!.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/app` } });
-      if (error) toast(/provider is not enabled|Unsupported provider/i.test(error.message) ? "Google sign-in isn't enabled for this project yet." : error.message, "error");
+      if (error) toast(/provider is not enabled|Unsupported provider/i.test(error.message) ? "Google sign-in isn't enabled for this project yet." : "Couldn't start Google sign-in. Please try again.", "error");
     },
     signInEmail: async (email) => {
       const { error } = await supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/app` } });
-      if (error) { toast(error.message, "error"); return false; }
+      if (error) { toast(/rate limit|too many/i.test(error.message) ? "Too many attempts. Please wait a minute and try again." : "Couldn't send the sign-in link. Check the email address and try again.", "error"); return false; }
       return true;
     },
     signOut: () => { setTimer(null); if (supabase) void supabase.auth.signOut(); else setUser(null); },

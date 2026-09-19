@@ -82,10 +82,11 @@ export function xpInfo(tasks: Task[], sessions: Session[]) {
 }
 
 export function toCSV(tasks: Task[], cats: Category[]) {
-  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  // Quote every cell; neutralise spreadsheet formula injection (=, +, -, @, tab, CR at the start of a cell).
+  const esc = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
   const rows = tasks.map((t) => [t.title, t.description, cats.find((c) => c.id === t.categoryId)?.name ?? "", t.priority,
     t.dueAt ?? "", t.isCompleted ? "completed" : "pending", t.completedAt ?? ""].map((v) => esc(String(v))).join(","));
-  return ["title,description,category,priority,due,status,completed_at", ...rows].join("\n");
+  return "﻿" + ["title,description,category,priority,due,status,completed_at", ...rows].join("\r\n"); // BOM so Excel reads UTF-8
 }
 
 export function seedData() {
